@@ -22,23 +22,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: latest
           run_install: false
+
       - name: Get pnpm store directory
         id: pnpm-cache
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
       - name: Setup pnpm cache
         uses: actions/cache@v3
         with:
@@ -46,24 +51,27 @@ jobs:
           key: ${{ runner.os }}-docs-pnpm-store-${{ hashFiles('**/docs/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-docs-pnpm-store-
+
       - name: Install dependencies
         working-directory: docs
-        run: pnpm install
-      - name: Run build
+        run: pnpm install --frozen-lockfile
+
+      - name: Build site
         working-directory: docs
         run: pnpm build
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+
+      - name: Upload built site artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          path: ./docs/.vitepress/dist
+          path: docs/.vitepress/dist
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v3
