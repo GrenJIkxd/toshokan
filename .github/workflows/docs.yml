@@ -60,6 +60,16 @@ jobs:
         working-directory: docs
         run: pnpm build
 
+      - name: Verify build output
+        run: |
+          if [ -d "docs/.vitepress/dist" ]; then
+            echo "Build output exists:";
+            ls -la docs/.vitepress/dist
+          else
+            echo "Error: build output not found at docs/.vitepress/dist";
+            exit 1
+          fi
+
       - name: Upload built site artifact
         uses: actions/upload-pages-artifact@v2
         with:
